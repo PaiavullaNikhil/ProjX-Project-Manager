@@ -6,6 +6,7 @@ import Project from "../models/project.js";
 import User from "../models/user.js";
 import WorkspaceInvite from "../models/workspace-invite.js";
 import Workspace from "../models/workspace.js";
+import ActivityLog from "../models/activity.js";
 
 const createWorkspace = async (req, res) => {
   try {
@@ -229,12 +230,19 @@ const getWorkspaceProjects = async (req, res) => {
     const projects = await Project.find({
       workspace: workspaceId,
       isArchived: false,
-      members: { $elemMatch: { user: req.user._id } },
+      $or: [
+        { members: { $elemMatch: { user: req.user._id } } },
+        { createdBy: req.user._id }
+      ]
     })
       .populate("tasks", "status")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({ projects, workspace });
+    const totalTaskInProgress = projects.reduce((acc, project) => {
+      return acc + project.tasks.filter(t => t.status === "In Progress").length;
+    }, 0);
+
+    res.status(200).json({ projects, workspace, totalTaskInProgress });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -280,6 +288,33 @@ const getWorkspaceStats = async (req, res) => {
     const totalTaskInProgress = tasks.filter(task => task.status === "In Progress").length;
 
     const today = new Date();
+    const last7DaysDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const prev7DaysDate = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+    // Calculate Velocity
+    const completedThisWeek = tasks.filter(t => t.status === "Done" && new Date(t.updatedAt) >= last7DaysDate).length;
+    const completedLastWeek = tasks.filter(t => t.status === "Done" && new Date(t.updatedAt) >= prev7DaysDate && new Date(t.updatedAt) < last7DaysDate).length;
+    const velocity = completedLastWeek === 0 ? completedThisWeek * 100 : Math.round(((completedThisWeek - completedLastWeek) / completedLastWeek) * 100);
+
+    // Bottleneck detection
+    const bottleneck = totalTaskInProgress > totalTaskToDo && totalTaskInProgress > 5 ? "In Progress" : null;
+
+    // Critical Tasks for Forecast
+    const criticalTasks = tasks
+      .filter(t => t.status !== "Done" && t.dueDate)
+      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+      .slice(0, 3)
+      .map(t => ({
+        id: t._id,
+        title: t.title,
+        project: projects.find(p => p._id.toString() === t.project.toString())?.title || "Unknown",
+        due: new Date(t.dueDate) < today ? "Overdue" : 
+             new Date(t.dueDate) <= new Date(today.getTime() + 24 * 60 * 60 * 1000) ? "24h left" : 
+             "Soon",
+        severity: t.priority === "High" ? "critical" : 
+                  new Date(t.dueDate) <= new Date(today.getTime() + 24 * 60 * 60 * 1000) ? "warning" : "low"
+      }));
+
     const upcomingTasks = tasks.filter(task => {
       const taskDate = new Date(task.dueDate);
       return (
@@ -382,6 +417,11 @@ const getWorkspaceStats = async (req, res) => {
 
     return res.status(200).json({
       stats,
+      intelligence: {
+        velocity,
+        bottleneck,
+        criticalTasks
+      },
       taskTrendsData,
       projectStatusData,
       taskPriorityData,
@@ -613,11 +653,39 @@ const acceptInviteByToken = async (req, res) => {
     });
   }
 };
+const getWorkspaceActivity = async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+    
+    // In a real app, we might need to filter by projects within the workspace
+    // For now, we'll fetch activities where resourceType is Workspace or where resource is related to workspace projects
+    const projects = await Project.find({ workspace: workspaceId }).select("_id");
+    const projectIds = projects.map(p => p._id);
+
+    const activities = await ActivityLog.find({
+      $or: [
+        { resourceType: "Workspace", resourceId: workspaceId },
+        { resourceType: "Project", resourceId: { $in: projectIds } },
+        { resourceType: "Task", "details.projectId": { $in: projectIds } } // Assuming we store projectId in details
+      ]
+    })
+    .populate("user", "name profilePicture")
+    .sort({ createdAt: -1 })
+    .limit(50);
+
+    res.status(200).json(activities);
+  } catch (error) {
+    console.error("Activity log error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export {
   acceptGenerateInvite,
   acceptInviteByToken,
   createWorkspace,
   deleteWorkspace,
+  getWorkspaceActivity,
   getWorkspaceDetails,
   getWorkspaceMembers,
   getWorkspaceProjects,

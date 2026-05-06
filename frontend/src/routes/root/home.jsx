@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
   CheckSquare,
@@ -73,42 +74,44 @@ const HomePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px]" />
+
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="flex justify-between items-center p-6 max-w-7xl mx-auto"
+        className="flex justify-between items-center p-6 max-w-7xl mx-auto relative z-10"
       >
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <CheckSquare className="w-5 h-5 text-white" />
+        <div className="flex items-center space-x-3">
+          <div className="size-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+            <CheckSquare className="w-6 h-6 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold text-gray-900">ProjX</span>
+          <span className="text-2xl font-bold tracking-tight">ProjX</span>
         </div>
-        <div className="flex items-center space-x-4">
-          <Link to="/sign-in">
-            <button className="text-gray-600 hover:text-gray-900 transition-colors">
-              Log in
-            </button>
+        <div className="flex items-center space-x-6">
+          <Link to="/sign-in" className="text-sm font-semibold hover:text-primary transition-colors">
+            Log In
           </Link>
           <Link to="/sign-up">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <Button className="h-10 px-6 rounded-xl shadow-lg shadow-primary/20">
               Get Started
-            </button>
+            </Button>
           </Link>
         </div>
       </motion.header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <div className="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center space-y-12 lg:space-y-0">
-          <motion.div {...fadeInUp} className="space-y-8">
-            <div className="space-y-6">
-              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                Get more done with{" "}
-                <span className="text-blue-600">ProjX</span>
+      <section className="max-w-7xl mx-auto px-6 py-24 relative z-10">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
+          <motion.div {...fadeInUp} className="space-y-10">
+            <div className="space-y-6 text-center lg:text-left">
+              <h1 className="text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1]">
+                Master your workflow with{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">ProjX</span>
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed">
                 The modern task management platform that helps teams organize,

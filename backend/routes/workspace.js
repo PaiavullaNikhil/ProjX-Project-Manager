@@ -14,6 +14,7 @@ import {
   deleteWorkspace,
   getWorkspaceMembers,
   updateWorkspaceOwner,
+  getWorkspaceActivity,
 } from "../controllers/workspace.js";
 import {
   inviteMemberSchema,
@@ -69,6 +70,7 @@ router.get("/:workspaceId", authMiddleware, getWorkspaceDetails);
 router.get("/:workspaceId/projects", authMiddleware, getWorkspaceProjects);
 router.get("/:workspaceId/stats", authMiddleware, getWorkspaceStats);
 router.get("/:workspaceId/members", authMiddleware, getWorkspaceMembers);
+router.get("/:workspaceId/activity", authMiddleware, getWorkspaceActivity);
 
 router.patch(
   "/:workspaceId/transfer",

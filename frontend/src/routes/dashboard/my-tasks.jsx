@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { Loader } from "@/components/Loader";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetMyTasksQuery } from "@/hooks/use-task";
 import { format } from "date-fns";
-import { ArrowUpRight, CheckCircle, Clock, FilterIcon } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Clock, Filter, Search, List, Kanban, ArrowUpDown, Layout } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const MyTasks = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -37,7 +39,6 @@ const MyTasks = () => {
   const [sortDirection, setSortDirection] = useState(initialSort === "asc" ? "asc" : "desc");
   const [search, setSearch] = useState(initialSearch);
 
-  // Remove empty search param (like `?search=` in URL)
   useEffect(() => {
     const params = {};
     searchParams.forEach((value, key) => {
@@ -61,21 +62,27 @@ const MyTasks = () => {
     if (urlSearch !== search) setSearch(urlSearch);
   }, [searchParams]);
 
-  // ⛔ Don’t fetch if workspaceId is missing
   const { data: myTasks, isLoading } = useGetMyTasksQuery(workspaceId, {
     enabled: !!workspaceId,
   }) || {};
 
   if (!workspaceId) {
     return (
-      <div className="text-center text-muted-foreground mt-10">
-        <p>No workspace selected.</p>
-        <p>Please select a workspace to view your tasks.</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-primary/10 p-10 rounded-[2.5rem] border border-primary/20 glass text-center"
+        >
+          <Layout className="size-16 text-primary mx-auto mb-6" />
+          <h2 className="text-2xl font-black tracking-tight text-gradient">Select a Workspace</h2>
+          <p className="text-muted-foreground mt-2 font-medium max-w-xs">Please select a workspace to view your assigned objectives.</p>
+        </motion.div>
       </div>
     );
   }
 
-  if (isLoading) return <Loader />;
+  if (isLoading) return <div className="flex justify-center p-20"><Loader /></div>;
 
   const filteredTasks = myTasks?.length
     ? myTasks
@@ -109,38 +116,63 @@ const MyTasks = () => {
   const doneTasks = sortedTasks.filter((task) => task.status === "Done");
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start md:items-center justify-between">
-        <h1 className="text-2xl font-bold">My Tasks</h1>
+    <div className="space-y-10 pb-20">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-xl text-primary shadow-lg shadow-primary/5">
+              <CheckCircle2 className="size-5" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tighter text-gradient">My Objectives</h1>
+          </div>
+          <p className="text-muted-foreground font-medium">Track and manage your personal contributions across all projects.</p>
+        </div>
 
-        <div className="flex flex-col items-start md:flex-row gap-2">
+        <div className="flex items-center gap-3">
+          <div className="relative glass rounded-2xl border-primary/10 px-4 flex items-center h-12 w-full md:w-64 shadow-sm group">
+            <Search className="size-4 text-muted-foreground mr-3 group-focus-within:text-primary transition-colors" />
+            <Input 
+              placeholder="Search objectives..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border-none bg-transparent focus-visible:ring-0 text-sm p-0 h-full placeholder:font-medium"
+            />
+          </div>
+
           <Button
             variant="outline"
+            className="rounded-2xl glass border-primary/10 h-12 w-12 p-0 hover:bg-primary/5"
             onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
           >
-            {sortDirection === "asc" ? "Oldest First" : "Newest First"}
+            <ArrowUpDown className="size-4" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <FilterIcon className="w-4 h-4 mr-1" />
+              <Button variant="outline" className="rounded-2xl glass border-primary/10 h-12 gap-2 font-black uppercase tracking-widest text-[10px] hover:bg-primary/5">
+                <Filter className="size-4" />
                 Filter
               </Button>
             </DropdownMenuTrigger>
-
-            <DropdownMenuContent>
-              <DropdownMenuLabel>Filter Tasks</DropdownMenuLabel>
-              <DropdownMenuSeparator />
+            <DropdownMenuContent className="rounded-2xl glass border-primary/10 p-2 shadow-2xl">
+              <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest px-3 py-2 text-muted-foreground">Category</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-primary/5" />
               {[
                 ["all", "All Tasks"],
                 ["todo", "To Do"],
                 ["inprogress", "In Progress"],
                 ["done", "Done"],
-                ["achieved", "Achieved"],
-                ["high", "High"],
+                ["achieved", "Archived"],
+                ["high", "Critical Priority"],
               ].map(([key, label]) => (
-                <DropdownMenuItem key={key} onClick={() => setFilter(key)}>
+                <DropdownMenuItem 
+                  key={key} 
+                  onClick={() => setFilter(key)}
+                  className={cn(
+                    "rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider mb-1 cursor-pointer transition-colors",
+                    filter === key ? "bg-primary text-primary-foreground" : "hover:bg-primary/10"
+                  )}
+                >
                   {label}
                 </DropdownMenuItem>
               ))}
@@ -149,81 +181,97 @@ const MyTasks = () => {
         </div>
       </div>
 
-      <Input
-        placeholder="Search tasks ...."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-md"
-      />
+      <Tabs defaultValue="list" className="w-full">
+        <div className="flex items-center justify-between mb-8 border-b border-primary/5 pb-4">
+          <TabsList className="bg-secondary/30 p-1 rounded-2xl border border-primary/5 h-12">
+            <TabsTrigger value="list" className="rounded-xl px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xl gap-2 text-xs font-black uppercase tracking-widest h-full transition-all">
+              <List className="size-4" />
+              List
+            </TabsTrigger>
+            <TabsTrigger value="board" className="rounded-xl px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xl gap-2 text-xs font-black uppercase tracking-widest h-full transition-all">
+              <Kanban className="size-4" />
+              Board
+            </TabsTrigger>
+          </TabsList>
+          
+          <Badge variant="outline" className="rounded-xl glass border-primary/20 text-primary font-black px-4 py-1">
+            {sortedTasks.length} Total
+          </Badge>
+        </div>
 
-      <Tabs defaultValue="list">
-        <TabsList>
-          <TabsTrigger value="list">List View</TabsTrigger>
-          <TabsTrigger value="board">Board View</TabsTrigger>
-        </TabsList>
-
-        {/* LIST VIEW */}
-        <TabsContent value="list">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Tasks</CardTitle>
-              <CardDescription>{sortedTasks.length} tasks assigned to you</CardDescription>
-            </CardHeader>
-
-            <CardContent>
-              <div className="divide-y">
+        <TabsContent value="list" className="mt-0">
+          <Card className="glass border-primary/5 shadow-2xl rounded-[2.5rem] overflow-hidden">
+            <CardContent className="p-0">
+              <div className="divide-y divide-primary/5">
                 {sortedTasks.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    No tasks found
+                  <div className="p-20 text-center space-y-4">
+                    <div className="size-16 bg-secondary/50 rounded-full flex items-center justify-center mx-auto text-muted-foreground/30">
+                      <Clock className="size-8" />
+                    </div>
+                    <p className="text-muted-foreground font-medium italic">No objectives match your current filters.</p>
                   </div>
                 ) : (
-                  sortedTasks.map((task) => (
-                    <div key={task._id} className="p-4 hover:bg-muted/50">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between mb-2 gap-3">
-                        <div className="flex">
-                          <div className="flex gap-2 mr-2">
-                            {task.status === "Done" ? (
-                              <CheckCircle className="size-4 text-green-500" />
-                            ) : (
-                              <Clock className="size-4 text-yellow-500" />
-                            )}
+                  sortedTasks.map((task, index) => (
+                    <motion.div 
+                      key={task._id} 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.02 }}
+                      className="group p-6 hover:bg-primary/5 transition-all duration-300"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex items-start gap-4">
+                          <div className={cn(
+                            "size-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg mt-1 group-hover:scale-110 transition-transform",
+                            task.status === "Done" ? "bg-emerald-500/10 text-emerald-500" : 
+                            task.status === "In Progress" ? "bg-blue-500/10 text-blue-500" : "bg-slate-500/10 text-slate-500"
+                          )}>
+                            {task.status === "Done" ? <CheckCircle2 className="size-5" /> : <Clock className="size-5" />}
                           </div>
 
-                          <div>
+                          <div className="space-y-2">
                             <Link
                               to={`/workspaces/${task.project?.workspace}/projects/${task.project?._id}/tasks/${task._id}`}
-                              className="font-medium hover:text-primary hover:underline transition-colors flex items-center"
+                              className="text-lg font-black tracking-tight group-hover:text-primary transition-colors flex items-center gap-2"
                             >
                               {task.title}
-                              <ArrowUpRight className="size-4 ml-1" />
+                              <ArrowUpRight className="size-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
                             </Link>
 
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Badge variant={task.status === "Done" ? "default" : "outline"}>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge variant="outline" className={cn(
+                                "text-[10px] font-black uppercase tracking-widest h-6 px-3 rounded-full border-primary/5",
+                                task.status === "Done" ? "bg-emerald-500/5 text-emerald-600" : "bg-secondary/50"
+                              )}>
                                 {task.status}
                               </Badge>
                               {task.priority && (
                                 <Badge
-                                  variant={task.priority === "High" ? "destructive" : "secondary"}
+                                  className={cn(
+                                    "text-[10px] font-black uppercase tracking-widest h-6 px-3 rounded-full border-none",
+                                    task.priority === "High" ? "bg-red-500 text-white shadow-lg shadow-red-500/20" : "bg-secondary/50 text-muted-foreground"
+                                  )}
                                 >
-                                  {task.priority}
+                                  {task.priority} Priority
                                 </Badge>
                               )}
-                              {task.isArchived && <Badge variant="outline">Archived</Badge>}
+                              <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest h-6 px-3 rounded-full bg-secondary/20 border-primary/5">
+                                {task.project?.title}
+                              </Badge>
                             </div>
                           </div>
                         </div>
 
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          {task.dueDate && <div>Due: {format(task.dueDate, "PPPP")}</div>}
-                          <div>
-                            Project:{" "}
-                            <span className="font-medium">{task.project?.title}</span>
+                        <div className="flex flex-col md:items-end gap-2 shrink-0">
+                          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
+                            {task.dueDate ? `Deadline: ${format(new Date(task.dueDate), "PPP")}` : "No deadline set"}
                           </div>
-                          <div>Modified on: {format(task.updatedAt, "PPPP")}</div>
+                          <div className="text-[10px] font-bold text-muted-foreground italic">
+                            Last tactical update: {format(new Date(task.updatedAt), "PPP")}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))
                 )}
               </div>
@@ -231,56 +279,72 @@ const MyTasks = () => {
           </Card>
         </TabsContent>
 
-        {/* BOARD VIEW */}
-        <TabsContent value="board">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[["To Do", todoTasks], ["In Progress", inProgressTasks], ["Done", doneTasks]].map(
-              ([column, tasks]) => (
-                <Card key={column}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      {column}
-                      <Badge variant="outline">{tasks.length}</Badge>
-                    </CardTitle>
-                  </CardHeader>
+        <TabsContent value="board" className="mt-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[["Strategic Queue", todoTasks, "bg-slate-500"], ["Active Deployment", inProgressTasks, "bg-blue-500"], ["Mission Complete", doneTasks, "bg-emerald-500"]].map(
+              ([column, tasks, color], colIndex) => (
+                <div key={column} className="space-y-6">
+                  <div className="flex items-center justify-between px-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn("size-2.5 rounded-full shadow-lg shadow-current", color.replace('bg-', 'text-'))} />
+                      <h3 className="text-sm font-black uppercase tracking-[0.2em]">{column}</h3>
+                    </div>
+                    <Badge variant="secondary" className="rounded-lg bg-secondary/50 text-muted-foreground font-black text-[10px]">
+                      {tasks.length}
+                    </Badge>
+                  </div>
 
-                  <CardContent className="p-3 space-y-3 max-h-[600px] overflow-y-auto">
+                  <div className="space-y-4">
                     {tasks.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-muted-foreground">
-                        No tasks found
+                      <div className="p-10 text-center glass rounded-3xl border-dashed border border-primary/5">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Empty Sector</p>
                       </div>
                     ) : (
-                      tasks.map((task) => (
-                        <Card key={task._id} className="hover:shadow-md transition-shadow">
-                          <Link
-                            to={`/workspaces/${task.project?.workspace}/projects/${task.project?._id}/tasks/${task._id}`}
-                            className="block"
-                          >
-                            <h3 className="font-medium">{task.title}</h3>
-                            <p className="text-sm text-muted-foreground line-clamp-3">
-                              {task.description || "No description"}
-                            </p>
-
-                            <div className="flex items-center mt-2 gap-2">
-                              <Badge
-                                variant={
-                                  task.priority === "High" ? "destructive" : "secondary"
-                                }
+                      tasks.map((task, taskIndex) => (
+                        <motion.div
+                          key={task._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: (colIndex * 0.1) + (taskIndex * 0.05) }}
+                        >
+                          <Card className="glass border-primary/5 hover:border-primary/20 transition-all duration-300 group rounded-[1.5rem] overflow-hidden shadow-sm hover:shadow-xl cursor-pointer">
+                            <CardContent className="p-6 space-y-4">
+                              <Link
+                                to={`/workspaces/${task.project?.workspace}/projects/${task.project?._id}/tasks/${task._id}`}
+                                className="block space-y-2"
                               >
-                                {task.priority}
-                              </Badge>
-                              {task.dueDate && (
-                                <span className="text-sm text-muted-foreground">
-                                  {format(task.dueDate, "PPPP")}
-                                </span>
-                              )}
-                            </div>
-                          </Link>
-                        </Card>
+                                <div className="flex items-start justify-between gap-4">
+                                  <h4 className="font-black tracking-tight leading-tight group-hover:text-primary transition-colors">{task.title}</h4>
+                                  <Badge className={cn(
+                                    "text-[8px] font-black uppercase tracking-tighter shrink-0 h-4 px-1.5",
+                                    task.priority === "High" ? "bg-red-500" : "bg-secondary text-muted-foreground"
+                                  )}>
+                                    {task.priority === "High" ? "!" : ""}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground font-medium line-clamp-2 leading-relaxed">
+                                  {task.description || "No mission description provided."}
+                                </p>
+                              </Link>
+                              
+                              <div className="flex items-center justify-between pt-4 border-t border-primary/5">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="size-3 text-muted-foreground" />
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                                    {task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No Due"}
+                                  </span>
+                                </div>
+                                <Badge variant="outline" className="text-[8px] font-black uppercase tracking-tighter bg-primary/5 border-primary/10">
+                                  {task.project?.title}
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
                       ))
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )
             )}
           </div>

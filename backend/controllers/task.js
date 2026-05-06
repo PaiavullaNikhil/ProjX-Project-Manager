@@ -113,7 +113,9 @@ const updateTaskTitle = async (req, res) => {
       (member) => member.user.toString() === req.user._id.toString()
     );
 
-    if (!isMember) {
+    const isCreator = project.createdBy?.toString() === req.user._id.toString();
+
+    if (!isMember && !isCreator) {
       return res.status(403).json({
         message: "You are not a member of this project",
       });
@@ -162,7 +164,9 @@ const updateTaskDescription = async (req, res) => {
       (member) => member.user.toString() === req.user._id.toString()
     );
 
-    if (!isMember) {
+    const isCreator = project.createdBy?.toString() === req.user._id.toString();
+
+    if (!isMember && !isCreator) {
       return res.status(403).json({
         message: "You are not a member of this project",
       });
@@ -216,7 +220,9 @@ const updateTaskStatus = async (req, res) => {
       (member) => member.user.toString() === req.user._id.toString()
     );
 
-    if (!isMember) {
+    const isCreator = project.createdBy?.toString() === req.user._id.toString();
+
+    if (!isMember && !isCreator) {
       return res.status(403).json({
         message: "You are not a member of this project",
       });
@@ -265,7 +271,9 @@ const updateTaskAssignees = async (req, res) => {
       (member) => member.user.toString() === req.user._id.toString()
     );
 
-    if (!isMember) {
+    const isCreator = project.createdBy?.toString() === req.user._id.toString();
+
+    if (!isMember && !isCreator) {
       return res.status(403).json({
         message: "You are not a member of this project",
       });
@@ -314,7 +322,9 @@ const updateTaskPriority = async (req, res) => {
       (member) => member.user.toString() === req.user._id.toString()
     );
 
-    if (!isMember) {
+    const isCreator = project.createdBy?.toString() === req.user._id.toString();
+
+    if (!isMember && !isCreator) {
       return res.status(403).json({
         message: "You are not a member of this project",
       });
@@ -364,7 +374,9 @@ const addSubTask = async (req, res) => {
       (member) => member.user.toString() === req.user._id.toString()
     );
 
-    if (!isMember) {
+    const isCreator = project.createdBy?.toString() === req.user._id.toString();
+
+    if (!isMember && !isCreator) {
       return res.status(403).json({
         message: "You are not a member of this project",
       });
@@ -493,7 +505,9 @@ const addComment = async (req, res) => {
       (member) => member.user.toString() === req.user._id.toString()
     );
 
-    if (!isMember) {
+    const isCreator = project.createdBy?.toString() === req.user._id.toString();
+
+    if (!isMember && !isCreator) {
       return res.status(403).json({
         message: "You are not a member of this project",
       });
@@ -549,7 +563,9 @@ const watchTask = async (req, res) => {
       (member) => member.user.toString() === req.user._id.toString()
     );
 
-    if (!isMember) {
+    const isCreator = project.createdBy?.toString() === req.user._id.toString();
+
+    if (!isMember && !isCreator) {
       return res.status(403).json({
         message: "You are not a member of this project",
       });
@@ -607,7 +623,9 @@ const achievedTask = async (req, res) => {
       (member) => member.user.toString() === req.user._id.toString()
     );
 
-    if (!isMember) {
+    const isCreator = project.createdBy?.toString() === req.user._id.toString();
+
+    if (!isMember && !isCreator) {
       return res.status(403).json({
         message: "You are not a member of this project",
       });

@@ -23,6 +23,9 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
+
 const SignUp = () => {
   const navigate = useNavigate();
   const form = useForm({
@@ -40,55 +43,42 @@ const SignUp = () => {
   const handleOnSubmit = (values) => {
     mutate(values, {
       onSuccess: () => {
-        toast.success("Email Verification Required", {
-          description:
-            "Please check your email for a verification link. If you don't see it, please check your spam folder.",
+        toast.success("Verification Required", {
+          description: "Check your email for the verification link.",
         });
         form.reset();
         navigate("/sign-in");
       },
       onError: (error) => {
-        const errorMessage =
-          error.response?.data?.message || "An error occurred";
-        console.error(error);
+        const errorMessage = error.response?.data?.message || "An error occurred";
         toast.error(errorMessage);
       },
     });
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-muted/40 p-4">
-      <Card className="max-w-md w-full shadow-xl">
-        <CardHeader className="text-center mb-5">
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
-            Create an account to continue
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="w-full max-w-sm">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-extrabold tracking-tight">Create Account</h1>
+        <p className="text-muted-foreground mt-2 font-medium">Join ProjX and start managing your team</p>
+      </div>
+
+      <Card className="border-primary/10 shadow-2xl glass overflow-hidden">
+        <CardContent className="pt-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleOnSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="email@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <form onSubmit={form.handleSubmit(handleOnSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Full Name</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="John Doe" {...field} />
+                      <Input 
+                        placeholder="John Doe" 
+                        className="h-11 bg-secondary/30 border-primary/5 focus:border-primary/20 transition-all placeholder:text-muted-foreground/50"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -96,41 +86,79 @@ const SignUp = () => {
               />
               <FormField
                 control={form.control}
-                name="password"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Email Address</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="********" {...field} />
+                      <Input 
+                        type="email" 
+                        placeholder="name@company.com" 
+                        className="h-11 bg-secondary/30 border-primary/5 focus:border-primary/20 transition-all placeholder:text-muted-foreground/50"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="********" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          className="h-11 bg-secondary/30 border-primary/5 focus:border-primary/20 transition-all placeholder:text-muted-foreground/50"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Confirm</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          className="h-11 bg-secondary/30 border-primary/5 focus:border-primary/20 transition-all placeholder:text-muted-foreground/50"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Button type="submit" className="w-full h-11 text-base font-semibold shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] active:scale-[0.98] mt-2" disabled={isPending}>
+                {isPending ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  "Create Account"
                 )}
-              />
-              <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? "Signing up..." : "Sign up"}
               </Button>
             </form>
           </Form>
-          <CardFooter className="flex items-center justify-center mt-6">
-            <p className="text-sm text-muted-foreground">
-              Already have an account? <Link to="/sign-in">Sign in</Link>
-            </p>
-          </CardFooter>
         </CardContent>
+        <CardFooter className="flex flex-col items-center justify-center pb-8 pt-0">
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent mb-6" />
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link to="/sign-in" className="font-bold text-foreground hover:text-primary transition-colors">
+              Sign In instead
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );

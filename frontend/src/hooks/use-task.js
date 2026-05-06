@@ -29,8 +29,9 @@ export const useUpdateTaskTitleMutation = () => {
     mutationFn: (data) =>
       updateData(`/tasks/${data.taskId}/title`, { title: data.title }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["task", data._id] });
-      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+      queryClient.invalidateQueries({ queryKey: ["task", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.project] });
     },
   });
 };
@@ -41,9 +42,41 @@ export const useUpdateTaskStatusMutation = () => {
   return useMutation({
     mutationFn: (data) =>
       updateData(`/tasks/${data.taskId}/status`, { status: data.status }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["task", data._id] });
-      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+    onMutate: async (newData) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["project", newData.projectId || newData.taskId] });
+
+      // Snapshot the previous value
+      const previousProjectData = queryClient.getQueryData(["project", newData.projectId]);
+
+      // Optimistically update to the new value
+      if (previousProjectData) {
+        queryClient.setQueryData(["project", newData.projectId], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            tasks: old.tasks.map((task) =>
+              task._id === newData.taskId ? { ...task, status: newData.status } : task
+            ),
+          };
+        });
+      }
+
+      return { previousProjectData, projectId: newData.projectId };
+    },
+    onError: (err, newData, context) => {
+      // Rollback to the previous value if mutation fails
+      if (context?.previousProjectData) {
+        queryClient.setQueryData(["project", context.projectId], context.previousProjectData);
+      }
+    },
+    onSettled: (data, error, variables, context) => {
+      // Always refetch after error or success to keep in sync with server
+      queryClient.invalidateQueries({ queryKey: ["project", variables.projectId || data?.project] });
+      if (data) {
+        queryClient.invalidateQueries({ queryKey: ["task", data._id] });
+        queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+      }
     },
   });
 };
@@ -57,8 +90,9 @@ export const useUpdateTaskDescriptionMutation = () => {
         description: data.description,
       }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["task", data._id] });
-      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+      queryClient.invalidateQueries({ queryKey: ["task", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.project] });
     },
   });
 };
@@ -72,8 +106,9 @@ export const useUpdateTaskAssigneesMutation = () => {
         assignees: data.assignees,
       }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["task", data._id] });
-      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+      queryClient.invalidateQueries({ queryKey: ["task", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.project] });
     },
   });
 };
@@ -87,8 +122,9 @@ export const useUpdateTaskPriorityMutation = () => {
         priority: data.priority,
       }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["task", data._id] });
-      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+      queryClient.invalidateQueries({ queryKey: ["task", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.project] });
     },
   });
 };
@@ -100,8 +136,9 @@ export const useAddSubTaskMutation = () => {
     mutationFn: (data) =>
       postData(`/tasks/${data.taskId}/add-subtask`, { title: data.title }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["task", data._id] });
-      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+      queryClient.invalidateQueries({ queryKey: ["task", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.project] });
     },
   });
 };
@@ -115,8 +152,9 @@ export const useUpdateSubTaskMutation = () => {
         completed: data.completed,
       }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["task", data._id] });
-      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+      queryClient.invalidateQueries({ queryKey: ["task", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.project] });
     },
   });
 };
@@ -130,6 +168,7 @@ export const useAddCommentMutation = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["comments", data.task] });
       queryClient.invalidateQueries({ queryKey: ["task-activity", data.task] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.project] });
     },
   });
 };
@@ -147,8 +186,9 @@ export const useWatchTaskMutation = () => {
   return useMutation({
     mutationFn: (data) => postData(`/tasks/${data.taskId}/watch`, {}),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["task", data._id] });
-      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+      queryClient.invalidateQueries({ queryKey: ["task", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["task-activity", data._id || data.task] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.project] });
     },
   });
 };
@@ -161,6 +201,7 @@ export const useAchievedTaskMutation = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["task", data._id] });
       queryClient.invalidateQueries({ queryKey: ["task-activity", data._id] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.project] });
     },
   });
 };

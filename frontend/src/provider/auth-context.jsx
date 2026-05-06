@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const handleLogout = () => {
       logout();
-      navigate("/sign-in");
+      navigate("/");
     };
     window.addEventListener("force-logout", handleLogout);
     return () => window.removeEventListener("force-logout", handleLogout);
@@ -67,12 +67,18 @@ export const AuthProvider = ({ children }) => {
     queryClient.clear();
   };
 
+  const updateUser = (newUser) => {
+    localStorage.setItem("user", JSON.stringify(newUser));
+    setUser(newUser);
+  };
+
   const values = {
     user,
     isAuthenticated,
     isLoading,
     login,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;

@@ -11,6 +11,7 @@ const userSchema = new Schema(
     },
     password: { type: String, required: true, select: false },
     name: { type: String, required: true, trim: true },
+    displayName: { type: String, trim: true },
     profilePicture: { type: String },
     isEmailVerified: { type: Boolean, default: false },
     lastLogin: { type: Date },

@@ -18,32 +18,36 @@ import {
 } from "@/hooks/use-task";
 import { useAuth } from "@/provider/auth-context";
 import { formatDistanceToNow } from "date-fns";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Calendar, Flag, Activity, Trash2, Archive, MessageSquare, ListTodo, Users, Clock, ChevronLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const TaskDetails = () => {
   const { user } = useAuth();
   const { taskId, projectId, workspaceId } = useParams();
   const navigate = useNavigate();
 
-  const { data, isLoading } = useTaskByIdQuery(taskId);
+  const { data, isLoading, isError } = useTaskByIdQuery(taskId);
   const { mutate: watchTask, isPending: isWatching } = useWatchTaskMutation();
-  const { mutate: achievedTask, isPending: isAchieved } =
-    useAchievedTaskMutation();
+  const { mutate: achievedTask, isPending: isAchieved } = useAchievedTaskMutation();
 
-  if (isLoading) {
-    return (
-      <div>
-        <Loader />
-      </div>
-    );
-  }
+  if (isLoading) return <div className="min-h-[80vh] flex items-center justify-center"><Loader /></div>;
 
-  if (!data) {
+  if (isError || !data) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-2xl font-bold">Task not found</div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+        <div className="size-20 bg-red-500/10 rounded-full flex items-center justify-center text-red-500">
+          <Trash2 className="size-10" />
+        </div>
+        <div className="text-center">
+          <h3 className="text-2xl font-black tracking-tight">Task Not Found</h3>
+          <p className="text-muted-foreground font-medium">This task could not be found on the system.</p>
+        </div>
+        <Button onClick={() => navigate(-1)} variant="outline" className="rounded-xl glass">
+          Go Back
+        </Button>
       </div>
     );
   }
@@ -53,20 +57,12 @@ const TaskDetails = () => {
     (watcher) => watcher._id.toString() === user?._id.toString()
   );
 
-  const goBack = () => navigate(-1);
-
-  const members = task?.assignees || [];
-
   const handleWatchTask = () => {
     watchTask(
       { taskId: task._id },
       {
-        onSuccess: () => {
-          toast.success("Task watched");
-        },
-        onError: () => {
-          toast.error("Failed to watch task");
-        },
+        onSuccess: () => toast.success("Watching status updated"),
+        onError: () => toast.error("Connection error"),
       }
     );
   };
@@ -75,137 +71,175 @@ const TaskDetails = () => {
     achievedTask(
       { taskId: task._id },
       {
-        onSuccess: () => {
-          toast.success("Task achieved");
-        },
-        onError: () => {
-          toast.error("Failed to achieve task");
-        },
+        onSuccess: () => toast.success(task.isArchived ? "Task reactivated" : "Task archived"),
+        onError: () => toast.error("An error occurred"),
       }
     );
   };
 
   return (
-    <div className="container mx-auto p-0 py-4 md:px-4">
-      <div className="flex flex-col md:flex-row items-center justify-between mb-6">
-        <div className="flex flex-col md:flex-row md:items-center">
-          <BackButton />
-
-          <h1 className="text-xl md:text-2xl font-bold">{task.title}</h1>
-
-          {task.isArchived && (
-            <Badge className="ml-2" variant={"outline"}>
-              Archived
-            </Badge>
-          )}
+    <div className="max-w-7xl mx-auto space-y-8 pb-20">
+      {/* Dynamic Command Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+        
+        <div className="relative z-10 space-y-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate(-1)} 
+            className="p-0 h-auto hover:bg-transparent text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 group"
+          >
+            <ChevronLeft className="size-4 group-hover:-translate-x-1 transition-transform" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back</span>
+          </Button>
+          
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black uppercase tracking-widest px-3">
+                Task
+              </Badge>
+              {task.isArchived && (
+                <Badge variant="outline" className="text-red-500 border-red-500/20 text-[10px] font-black uppercase tracking-widest bg-red-500/5">
+                  Archived
+                </Badge>
+              )}
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-gradient leading-none">
+              {task.title}
+            </h1>
+            <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic mt-1">
+              <Clock className="size-3 text-primary" />
+              Created {formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}
+            </div>
+          </div>
         </div>
 
-        <div className="flex space-x-2 mt-4 md:mt-0">
+        <div className="relative z-10 flex flex-wrap gap-3">
           <Button
-            variant={"outline"}
+            variant="outline"
             size="sm"
             onClick={handleWatchTask}
-            className="w-fit"
+            className={cn("h-12 px-6 rounded-xl glass border-primary/10 font-black uppercase tracking-widest text-[10px] gap-2", isUserWatching && "bg-primary/10 border-primary/30 text-primary")}
             disabled={isWatching}
           >
-            {isUserWatching ? (
-              <>
-                <EyeOff className="mr-2 size-4" />
-                Unwatch
-              </>
-            ) : (
-              <>
-                <Eye className="mr-2 size-4" />
-                Watch
-              </>
-            )}
+            {isUserWatching ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            {isUserWatching ? "Unwatch" : "Watch"}
           </Button>
 
           <Button
-            variant={"outline"}
+            variant="outline"
             size="sm"
             onClick={handleAchievedTask}
-            className="w-fit"
+            className="h-12 px-6 rounded-xl glass border-primary/10 font-black uppercase tracking-widest text-[10px] gap-2 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-all"
             disabled={isAchieved}
           >
+            <Archive className="size-4" />
             {task.isArchived ? "Unarchive" : "Archive"}
           </Button>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* make changes here */}
-        <div className="lg:col-span-2"> 
-          <div className="bg-card rounded-lg p-6 shadow-sm mb-6">
-            <div className="flex flex-col md:flex-row justify-between items-start mb-4">
-              <div>
-                <Badge
-                  variant={
-                    task.priority === "High"
-                      ? "destructive"
-                      : task.priority === "Medium"
-                      ? "default"
-                      : "outline"
-                  }
-                  className="mb-2 capitalize"
-                >
-                  {task.priority} Priority
-                </Badge>
-
-                <TaskTitle title={task.title} taskId={task._id} />
-
-                <div className="text-sm md:text-base text-muted-foreground">
-                  Created at:{" "}
-                  {formatDistanceToNow(new Date(task.createdAt), {
-                    addSuffix: true,
-                  })}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 mt-4 md:mt-0">
+      <div className="grid lg:grid-cols-3 gap-8 items-start">
+        {/* Primary Mission Data */}
+        <div className="lg:col-span-2 space-y-8"> 
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass p-8 rounded-[2.5rem] border border-primary/5 shadow-xl space-y-10"
+          >
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                  <Activity className="size-3 text-primary" /> Status
+                </h3>
                 <TaskStatusSelector status={task.status} taskId={task._id} />
-
-                <Button
-                  variant={"destructive"}
-                  size="sm"
-                  onClick={() => {}}
-                  className="hidden md:block"
-                >
-                  Delete Task
-                </Button>
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                  <Flag className="size-3 text-primary" /> Priority
+                </h3>
+                <TaskPrioritySelector priority={task.priority} taskId={task._id} />
               </div>
             </div>
 
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-muted-foreground mb-0">
-                Description
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                <Activity className="size-3 text-primary" /> Description
               </h3>
-
               <TaskDescription
-                description={task.description || ""}
+                description={task.description || "No description provided for this task."}
                 taskId={task._id}
               />
             </div>
 
-            <TaskAssigneesSelector
-              task={task}
-              assignees={task.assignees}
-              projectMembers={project.members}
-            />
+            <div className="pt-8 border-t border-primary/5">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 mb-6">
+                <Users className="size-3 text-primary" /> Assigned Members
+              </h3>
+              <TaskAssigneesSelector
+                task={task}
+                assignees={task.assignees}
+                projectMembers={project.members}
+              />
+            </div>
 
-            <TaskPrioritySelector priority={task.priority} taskId={task._id} />
+            <div className="pt-8 border-t border-primary/5">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 mb-6">
+                <ListTodo className="size-3 text-primary" /> Subtasks
+              </h3>
+              <SubTasksDetails subTasks={task.subtasks || []} taskId={task._id} />
+            </div>
+          </motion.div>
 
-            <SubTasksDetails subTasks={task.subtasks || []} taskId={task._id} />
-          </div>
-
-          <CommentSection taskId={task._id} members={project.members} />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass p-8 rounded-[2.5rem] border border-primary/5 shadow-xl"
+          >
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 mb-8">
+              <MessageSquare className="size-3 text-primary" /> Comments
+            </h3>
+            <CommentSection taskId={task._id} members={project.members} />
+          </motion.div>
         </div>
 
-        {/* right side */}
-        <div className="lg:col-span-1">
-          <Watchers watchers={task.watchers || []} />
+        {/* Sidebar Intel */}
+        <div className="space-y-8 sticky top-8">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="glass p-8 rounded-[2.5rem] border border-primary/5 shadow-xl"
+          >
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 mb-6">
+              <Eye className="size-3 text-primary" /> Watchers
+            </h3>
+            <Watchers watchers={task.watchers || []} />
+          </motion.div>
 
-          <TaskActivity resourceId={task._id} />
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="glass p-8 rounded-[2.5rem] border border-primary/5 shadow-xl max-h-[600px] flex flex-col"
+          >
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 mb-6">
+              <Activity className="size-3 text-primary" /> Activity Log
+            </h3>
+            <div className="flex-1 overflow-hidden">
+               <TaskActivity resourceId={task._id} />
+            </div>
+          </motion.div>
+
+          <Button 
+            variant="ghost" 
+            className="w-full h-14 rounded-2xl border border-red-500/10 hover:bg-red-500/10 text-red-500/50 hover:text-red-500 transition-all font-black uppercase tracking-widest text-[10px] gap-2"
+          >
+            <Trash2 className="size-4" />
+            Delete Task
+          </Button>
         </div>
       </div>
     </div>

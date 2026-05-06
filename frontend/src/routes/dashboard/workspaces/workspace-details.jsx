@@ -35,6 +35,7 @@ const WorkspaceDetails = () => {
       <WorkspaceHeader
         workspace={data.workspace}
         members={data.workspace.members}
+        activeTasks={data.totalTaskInProgress}
         onCreateProject={() => setIsCreateProject(true)}
         onInviteMember={() => setIsInviteMember(true)}
       />

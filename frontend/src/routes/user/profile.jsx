@@ -46,6 +46,7 @@ const changePasswordSchema = z
 
 const profileSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
+  displayName: z.string().optional(),
   profilePicture: z.string().optional(),
 });
 
@@ -67,10 +68,12 @@ const Profile = () => {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user?.name || "",
+      displayName: user?.displayName || "",
       profilePicture: user?.profilePicture || "",
     },
     values: {
       name: user?.name || "",
+      displayName: user?.displayName || "",
       profilePicture: user?.profilePicture || "",
     },
   });
@@ -103,9 +106,14 @@ const Profile = () => {
 
   const handleProfileFormSubmit = (values) => {
     updateUserProfile(
-      { name: values.name, profilePicture: values.profilePicture || "" },
+      { 
+        name: values.name, 
+        displayName: values.displayName || "", 
+        profilePicture: values.profilePicture || "" 
+      },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          updateUser(data);
           toast.success("Profile updated successfully");
         },
         onError: (error) => {
@@ -176,8 +184,24 @@ const Profile = () => {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="Your legal name" />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={profileForm.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="How others should address you" />
+                    </FormControl>
+                    <CardDescription className="text-[10px] mt-1">
+                      This is the name people will see throughout the workspace.
+                    </CardDescription>
                     <FormMessage />
                   </FormItem>
                 )}

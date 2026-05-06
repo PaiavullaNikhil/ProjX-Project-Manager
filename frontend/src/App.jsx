@@ -22,6 +22,8 @@ import Settings from "./routes/dashboard/Settings";
 import TaskDetails from "./routes/dashboard/task/task-details";
 import Workspaces from "./routes/dashboard/workspaces/index";
 import WorkspaceDetails from "./routes/dashboard/workspaces/workspace-details";
+import Explore from "./routes/dashboard/explore";
+import ActivityLog from "./routes/dashboard/activity-log";
 
 // User
 import UserProfile from "./routes/user/profile";
@@ -36,9 +38,11 @@ function App() {
     <ReactQueryProvider>
       <AuthProvider>
         <Routes>
+          {/* 🔓 Public Routes (Home) */}
+          <Route index element={<Home />} />
+
           {/* 🔓 Public Routes (Auth) */}
           <Route element={<AuthLayout />}>
-            <Route index element={<Home />} />
             <Route path="sign-in" element={<SignIn />} />
             <Route path="sign-up" element={<SignUp />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
@@ -64,6 +68,8 @@ function App() {
           <Route path="my-tasks" element={<MyTasks />} />
           <Route path="members" element={<Members />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="explore" element={<Explore />} />
+          <Route path="activity" element={<ActivityLog />} />
         </Route>
 
         🎟 Standalone route (e.g. shared invite link)

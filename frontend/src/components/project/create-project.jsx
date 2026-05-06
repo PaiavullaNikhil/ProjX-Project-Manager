@@ -4,7 +4,7 @@ import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { UseCreateProject } from "@/hooks/use-project";
+import { useCreateProjectMutation } from "@/hooks/use-project";
 import { projectSchema } from "@/lib/schema";
 import { ProjectStatus } from "@/types";
 
@@ -57,7 +57,7 @@ export const CreateProjectDialog = ({
     },
   });
 
-  const { mutate, isPending } = UseCreateProject();
+  const { mutate, isPending } = useCreateProjectMutation();
 
   const onSubmit = (values) => {
     if (!workspaceId) return;

@@ -22,7 +22,7 @@ const getUserProfile = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   try {
-    const { name, profilePicture } = req.body;
+    const { name, displayName, profilePicture } = req.body;
 
     const user = await User.findById(req.user._id);
 
@@ -31,6 +31,7 @@ const updateUserProfile = async (req, res) => {
     }
 
     user.name = name;
+    user.displayName = displayName;
     user.profilePicture = profilePicture;
 
     await user.save();

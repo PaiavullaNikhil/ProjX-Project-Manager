@@ -62,6 +62,14 @@ export const useGetWorkspaceDetailsQuery = (workspaceId) => {
   });
 };
 
+export const useGetWorkspaceActivityQuery = (workspaceId) => {
+  return useQuery({
+    queryKey: ["workspace", workspaceId, "activity"],
+    queryFn: async () => fetchData(`/workspaces/${workspaceId}/activity`),
+    enabled: !!workspaceId,
+  });
+};
+
 export const useInviteMemberMutation = () => {
   return useMutation({
     mutationFn: (data) =>

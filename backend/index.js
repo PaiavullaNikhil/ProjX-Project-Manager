@@ -1,12 +1,11 @@
+import "./env.js";
+
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 
 import routes from "./routes/index.js";
-
-dotenv.config();
 
 const app = express();
 
@@ -20,8 +19,10 @@ app.use(
 app.use(morgan("dev"));
 
 // db connection
+const dbUri = process.env.MONGODB_URI;
+
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(dbUri)
   .then(() => console.log("BD Connected successfully."))
   .catch((err) => console.log("Failed to connect to DB:", err));
 

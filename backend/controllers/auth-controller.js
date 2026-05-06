@@ -216,10 +216,12 @@ const resetPasswordRequest = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
+      console.log("Reset password failed: User not found for email:", email);
       return res.status(400).json({ message: "User not found" });
     }
 
     if (!user.isEmailVerified) {
+      console.log("Reset password failed: Email not verified for user:", email);
       return res
         .status(400)
         .json({ message: "Please verify your email first" });
@@ -229,13 +231,8 @@ const resetPasswordRequest = async (req, res) => {
       userId: user._id,
     });
 
-    if (existingVerification && existingVerification.expiresAt > new Date()) {
-      return res.status(400).json({
-        message: "Reset password request already sent",
-      });
-    }
-
-    if (existingVerification && existingVerification.expiresAt < new Date()) {
+    if (existingVerification) {
+      console.log("Deleting existing verification to allow resend for:", email);
       await Verification.findByIdAndDelete(existingVerification._id);
     }
 

@@ -21,7 +21,7 @@ import TransferWorkspaceDialog from "../../components/workspace/transfer-workspa
 import {
   useDeleteWorkspace,
   useGetWorkspaceDetailsQuery,
-  useGetWorkspaceMembers,
+  useGetWorkspaceMembersQuery,
   useTransferWorkspace,
   useUpdateWorkspace,
 } from "../../hooks/use-workspace";
@@ -49,7 +49,7 @@ const Settings = () => {
     useGetWorkspaceDetailsQuery(workspaceId, {
       enabled: !!workspaceId,
     });
-  const { data: membersData } = useGetWorkspaceMembers(workspaceId,{
+  const { data: membersData } = useGetWorkspaceMembersQuery(workspaceId,{
     enabled: !!workspaceId
   }) || {};
 

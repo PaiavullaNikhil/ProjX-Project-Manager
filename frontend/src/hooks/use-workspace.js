@@ -32,7 +32,7 @@ export const useGetWorkspacesQuery = () => {
   });
 };
 
-export const useGetWorkspaceMembers=(workspaceId) => {
+export const useGetWorkspaceMembersQuery=(workspaceId) => {
   return useQuery({
     queryKey: ["workspace", workspaceId, "members"],
     queryFn: async () => fetchData(`/workspaces/${workspaceId}/members`),
